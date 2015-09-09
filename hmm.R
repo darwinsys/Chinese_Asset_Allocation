@@ -7,6 +7,7 @@ library(PortfolioAnalytics)
 
 data <- read.csv("NAV_5ETFs.csv")
 data$X <- strptime(data$X, format="%m/%d/%y", tz = "")
+<<<<<<< HEAD
 etfs <- as.xts(data[,2:6], order.by = data$X, tz="")
 
 etfs_weekly <- etfs[endpoints(etfs, on="weeks")]
@@ -18,6 +19,12 @@ benchmark <- as.xts(data_bm[, 2:3], order.by=strptime(data_bm$date, format="%Y/%
 ret_benchmark <- Return.calculate(benchmark, method="discrete")
 ret_benchmark_weekly <- Return.calculate(benchmark[endpoints(benchmark,on="weeks")])
 ret_benchmark_monthly <- Return.calculate(benchmark[endpoints(benchmark,on="months")])
+=======
+benchmarks <- as.xts(data[,2:6], order.by = data$X, tz="")
+
+benchmarks_weekly <- sectors[endpoints(benchmarks, on="weeks")]
+benchmarks_monthly <- sectors[endpoints(benchmarks, on="months")]
+>>>>>>> origin/master
 
 ### calc rets
 ret_bm <- na.omit(Return.calculate(benchmarks, method="discrete"))
@@ -74,7 +81,11 @@ charts.PerformanceSummary(cbind(ret_s3, ret_test[,1]))
 charts.PerformanceSummary(cbind(ret_s2 + ret_s3, ret_s1, ret_s2, ret_s3, ret_test[,1]))
 
 ### 3 state ZZ and HS
+<<<<<<< HEAD
 
+=======
+library(mhsmm)
+>>>>>>> origin/master
 J<-3
 initial <- rep(1/J,J)
 P <- matrix(c(.1, .1, .1, .3,.5,.7,.5,.2,.1),nrow=J)
@@ -82,6 +93,7 @@ b <- list(mu=list(c(-3,0, -1),c(1,2, 3), c(2,3, -3)),
           sigma=list(diag(3),diag(3)*2, matrix(c(4,2,2,2, 3, 1, 2, 1,3), ncol=3)))
 model <- hmmspec(init=initial, trans=P, parms.emission=b,dens.emission=dmvnorm.hsmm)
 
+<<<<<<< HEAD
 test_data <- na.omit(cbind(ret_benchmark[, 1], ret_benchmark[,2], lag(ret_benchmark[,1],5)))
 test_data1 <- test_data[1:2000]
 test_data2 <- test_data[2000:2560]
@@ -120,6 +132,13 @@ test_data1 <- test_data[1:400, ]
 test_data2 <- test_data[500:540, ]
 h1 <- hmmfit(test_data1, model, mstep = mstep.mvnorm)
 yhat <- predict(h1, test_data2, method="smoothed")
+=======
+test_data <- na.omit(cbind(ret_bm[, 1], ret_bm[,3], ret_bm[,2]))
+test_data1 <- test_data[1:2000]
+test_data2 <- test_data[2000:2560]
+h1 <- hmmfit(test_data, model, mstep = mstep.mvnorm)
+yhat <- predict(h1, test_data2)
+>>>>>>> origin/master
 signal <- as.xts(x = yhat$s, order.by=index(test_data2), tzone=Sys.getenv("TZ"))
 
 
@@ -130,6 +149,7 @@ ret_s2 <- ret_test[, 1] * lag(signal == 2, 1)
 charts.PerformanceSummary(cbind(ret_s2, ret_test[,1]))
 ret_s3 <- ret_test[, 1] * lag(signal == 3, 1) 
 charts.PerformanceSummary(cbind(ret_s3, ret_test[,1]))
+<<<<<<< HEAD
 ret_s4 <- ret_test[, 1] * lag(signal == 4, 1) 
 charts.PerformanceSummary(cbind(ret_s4, ret_test[,1]))
 ret_s5 <- ret_test[, 1] * lag(signal == 5, 1) 
@@ -139,4 +159,7 @@ ret_strategy <- cbind(ret_s2+ret_s3+ret_s5, ret_s1, ret_s2, ret_s3, ret_s4, ret_
 charts.PerformanceSummary(ret_strategy)
 
 rbind(table.AnnualizedReturns(ret_strategy), maxDrawdown(ret_strategy), CalmarRatio(ret_strategy))
+=======
+charts.PerformanceSummary(cbind(ret_s2 + ret_s3, ret_s1, ret_s2, ret_s3, ret_test[,1]))
+>>>>>>> origin/master
 
