@@ -119,12 +119,16 @@ b <- list(mu=list(c(-3,0, -1),c(1,2, 3), c(2,3, -3), c(1, 3, 1), c(0, 3,0)),
           matrix(c(4,2,2,2, 3, 1, 2, 1,3), ncol=3)))
 model <- hmmspec(init=initial, trans=P, parms.emission=b,dens.emission=dmvnorm.hsmm)
 
-ret_target <- ret_benchmark_weekly
+#ret_target <- ret_benchmark_weekly
+ret_target <- ret_benchmark
 nr_target <- 1
 test_data <- na.omit(cbind(ret_target[, nr_target], 
                            lag(ret_target[,nr_target], 1), lag(ret_target[,nr_target],2)))
-test_data1 <- test_data[1:400, ]
-test_data2 <- test_data[500:540, ]
+#test_data1 <- test_data[1:200, ]
+#test_data2 <- test_data[200:540, ]
+test_data1 <- test_data[1:1500, ]
+test_data2 <- test_data[1500:2580, ]
+
 h1 <- hmmfit(test_data1, model, mstep = mstep.mvnorm)
 yhat <- predict(h1, test_data2, method="smoothed")
 signal <- as.xts(x = yhat$s, order.by=index(test_data2), tzone=Sys.getenv("TZ"))
@@ -137,16 +141,14 @@ ret_s2 <- ret_test[, 1] * lag(signal == 2, 1)
 charts.PerformanceSummary(cbind(ret_s2, ret_test[,1]))
 ret_s3 <- ret_test[, 1] * lag(signal == 3, 1) 
 charts.PerformanceSummary(cbind(ret_s3, ret_test[,1]))
-<<<<<<< HEAD
 ret_s4 <- ret_test[, 1] * lag(signal == 4, 1) 
 charts.PerformanceSummary(cbind(ret_s4, ret_test[,1]))
 ret_s5 <- ret_test[, 1] * lag(signal == 5, 1) 
 charts.PerformanceSummary(cbind(ret_s5, ret_test[,1]))
 
-ret_strategy <- cbind(ret_s2+ret_s3+ret_s5, ret_s1, ret_s2, ret_s3, ret_s4, ret_s5, ret_test[,1])
+ret_strategy <- cbind(ret_s5+ret_s4, ret_s1, ret_s2, ret_s3, ret_s4, ret_s5, ret_test[,1])
 charts.PerformanceSummary(ret_strategy)
 
 rbind(table.AnnualizedReturns(ret_strategy), maxDrawdown(ret_strategy), CalmarRatio(ret_strategy))
-charts.PerformanceSummary(cbind(ret_s2 + ret_s3, ret_s1, ret_s2, ret_s3, ret_test[,1]))
 
 
