@@ -5,12 +5,12 @@ library(fGarch)
 library(PerformanceAnalytics)
 library(PortfolioAnalytics)
 
-data <- read.csv("NAV_5ETFs.csv")
+data <- read.csv("Data/NAV_5ETFs.csv")
 data$X <- strptime(data$X, format="%m/%d/%y", tz = "")
 benchmarks <- as.xts(data[,2:6], order.by = data$X, tz="")
 
-benchmarks_weekly <- sectors[endpoints(benchmarks, on="weeks")]
-benchmarks_monthly <- sectors[endpoints(benchmarks, on="months")]
+benchmarks_weekly <- benchmarks[endpoints(benchmarks, on="weeks")]
+benchmarks_monthly <- benchmarks[endpoints(benchmarks, on="months")]
 
 ### calc rets
 ret_bm <- na.omit(Return.calculate(benchmarks, method="discrete"))
@@ -53,7 +53,7 @@ portf <- add.constraint(portf, type = "long_only")
 #portf <- add.constraint(portf, type = "full_investment")
 
 #portf <- add.constraint(portf, type="turnover", turnover_target=0.2)
-portf <- add.constraint(portf, type="return", return_target=0.0008)
+portf <- add.constraint(portf, type="return", return_target=0.0005)
 #portf <- add.objective(portf, type="risk", name="StdDev")
 
 portf <- add.objective(portf, type="risk", name="ES")
