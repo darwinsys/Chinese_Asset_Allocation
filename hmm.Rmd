@@ -1,0 +1,26 @@
+---
+title: "隐形马尔可夫模型在中国股票市场的应用"
+author: "JX"
+date: "September 11, 2015"
+output: pdf_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+隐形马尔可夫模型（HMM）在预测和投资股票市场上的应用。 
+隐形马尔科夫模型是一个高等数学使用的模型， 投资业非常著名的量化投资机构－ 文艺复兴基金因为他们使用的各类量化对冲交易模型， 数十年来以高达30%的平均收益，以及及其稳定的风险，在业界获得了头号量化对冲基金的美誉。 虽然文艺复兴基金对他们交易采用的算法守口如瓶，然后通过各种渠道，例如公众发言，媒体杂志采访，以及他们雇佣众多顶级的机器学习，图像和语音识别累的专家作为公司的投资经理等， 人们可以推测文艺复兴基金采用了尖端的模式识别方法来寻找预测市场走向和投资活力的方法。 其中隐形马尔可夫模型是在语音识别领域最有效的数学模型， 尝试用该模型来预测中国股票市场的走势，也许是打开该基金盈利宝库的“芝麻开门”的口令。 
+
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
