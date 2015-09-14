@@ -187,6 +187,7 @@ gmmhmm <- function(data, n_start) {
   ret_c <- cbind(ret_s1[n_start:n,], ret_target[n_start:n,])
   charts.PerformanceSummary(ret_c)
   rbind(table.AnnualizedReturns(ret_c), maxDrawdown(ret_c), CalmarRatio(ret_c))
+  return(ret_c)
   
 }
 
