@@ -7,7 +7,6 @@ library(PortfolioAnalytics)
 library(mclust)
 library(mhsmm)
 
-source("HMM/gmm")
 
 data_bm <- read.csv("HMM/index_szsh.csv")
 benchmark <- as.xts(data_bm[, 2:3], order.by=strptime(data_bm[,1], format="%m/%d/%y", tz=""))
@@ -122,14 +121,14 @@ ret_benchmark_weeklys <- na.omit(Return.calculate(benchmark[endpoints(benchmark,
 ret_shanghai <- ret_benchmark_weeklys[, 1]
 ret_shenzhen <- ret_benchmark_weeklys[, 2]
 
-dataset <- na.omit(cbind(ret_shanghai, lag(ret_shanghai, 1), lag(ret_shanghai, 5)))
+data <- na.omit(cbind(ret_shanghai, lag(ret_shanghai, 1), lag(ret_shanghai, 2), lag(ret_shanghai, 5)))
 source('HMM/gmmhmm.R')
-gmmhmm(data=dataset[1000:1255], n_start = 500) -> ret_shanghai_strategy
+ret_shanghai_strategy <- gmmhmm( dataset  =data[500:1250], ret_target = ret_shanghai, n_start = 500) 
 write.csv(as.data.frame(ret_shanghai_strategy), "HMM/test1_shanghai_weekly_0_1_5_500")
 
-dataset <- na.omit(cbind(ret_shenzhen, lag(ret_shenzhen, 1), lag(ret_shenzhen, 5)))
+data <- na.omit(cbind(ret_shenzhen, lag(ret_shenzhen, 1), lag(ret_shenzhen, 5)))
 source('HMM/gmmhmm.R')
-gmmhmm(data=dataset[1000:1255], n_start = 500) -> ret_shenzhen_strategy
+gmmhmm(dataset=data[500:1255], ret_target=ret_shenzhen, n_start = 500) -> ret_shenzhen_strategy
 write.csv(as.data.frame(ret_shenzhen_strategy), "HMM/test1_shenzhen_weekly_0_1_5_500")
 
 ##################################################################################

@@ -93,10 +93,10 @@ gmmhmm_training <- function(data_training) {
   }
 }
 
-gmmhmm <- function(data, n_start) {
+gmmhmm <- function(dataset, ret_target, n_start) {
   n <- nrow(dataset) 
   ret_s1 <- ret_target * 0;
-  for (i in n_start:(n)) {
+  for (i in n_start:n) {
     data_training <- dataset[(i - n_start + 1):i,];
     
     #### Using Mixture Model to determine the optimal number of regimes and the settings under 
