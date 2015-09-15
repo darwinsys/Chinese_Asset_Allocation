@@ -28,7 +28,7 @@ ret_target <- na.omit(cbind(ret_benchmark[, 1], lag(ret_benchmark[, 1], 1),
 periods <- c(500, 750, 1000, 1200, 1500, 1750, 2000)
 
 n <- nrow(ret_target);
-n_start <- 4000;
+n_start <- 3000;
 ret_strategy <- ret_target[,1] * 0;
 for (j in n_start:(n+1))
 {
@@ -40,7 +40,7 @@ for (j in n_start:(n+1))
     print(paste("Trying period ", periods[i]))
     training_set = ret_target[(n_start-periods[i]):n_start]
     gmm <- gmm_training(data_training = training_set);
-    if (gmm$J <= 2) next;
+    if (gmm$J < 2) next;
     if (gmm$J >= 5) next;
     
     hmm_output <- hmm_training(gmm, data_training = training_set);
@@ -79,10 +79,69 @@ for (j in n_start:(n+1))
 }
 
 
+############################################################################
+data_bm <- read.csv("HMM/index_szsh.csv")
+benchmark <- as.xts(data_bm[, 2:3], order.by=strptime(data_bm[,1], format="%m/%d/%y", tz=""))
+ret_benchmark <- na.omit(Return.calculate(benchmark, method="discrete"))
+ret_benchmark_weeklys <- na.omit(Return.calculate(benchmark[endpoints(benchmark,on =  "weeks")]), method="discrete")
+
+ret_benchmark_5d <- na.omit(benchmark / lag(benchmark, 5) - 1) 
+ret_benchmark_10d <- na.omit(benchmark / lag(benchmark, 10) - 1)
 
 
+############ 上海指数
+ret_target <- na.omit(cbind(ret_benchmark[, 1], lag(ret_benchmark[, 1], 1), 
+                            lag(ret_benchmark[, 1], 2), ret_benchmark_5d[, 1],lag(ret_benchmark_5d[,1], 1)))
+periods <- c(500,  1500)
+
+n <- nrow(ret_target);
 n_start <- 3000;
+ret_strategy <- ret_target[,1] * 0;
+for (j in n_start:(n-1))
+{
+  data_training_short <- ret_target[(n_start-periods[1]):n_start]
+  data_training_long <- ret_target[(n_start-periods[2]):n_start]
+  
+  gmm_short <- gmm_training(data_training = data_training_short);
+  gmm_long <- gmm_training(data_training = data_training_long);
+  hmm_short <- hmm_training(gmm_short, data_training = data_training_short);
+  hmm_long <- hmm_training(gmm_long, data_training = data_training_long)
+  
+  max_sharpe_regime_short <- hmm_short$sharpe_ratio_max_regime
+  max_sharpe_short <- hmm_short$sharpe_ratio[max_sharpe_regime_short]
+  max_sharpe_regime_long <- hmm_long$sharpe_ratio_max_regime
+  max_sharpe_long <- hmm_long$sharpe_ratio[max_sharpe_regime_long]
+  
+  predicted_regime_short <- tail(hmm_short$hmm_yhat, 1)
+  predicted_regime_long <- tail(hmm_long$hmm_yhat, 1)
+  
+  signal_short <- as.integer(predicted_regime_short == max_sharpe_short)
+  signal_long <- as.integer(predicted_regime_long == max_sharpe_long)
+  
+  if (max_sharpe_long > max_sharpe_short)
+    ret_strategy[j+1] <- ret_target[j+1, 1] * signal_long;
+  if (max_sharpe_short < max_sharpe_long)
+    ret_strategy[j+1] <- ret_target[j+1, 1] * signal_short;
+  
+  print(paste("--------------", as.character(index(ret_strategy[j+1]))))
+  print(paste("max sharpe long =", max_sharpe_long))
+  print(paste("max sharpe regime long = ", max_sharpe_regime_long, ":predicted = ", predicted_regime_long))
+  print(paste("max sharpe regime short = ", max_sharpe_regime_short, ":predicted = ", predicted_regime_short))
+  print(paste("prev ret = ", ret_target[j, 1], ": current ret= ", ret_target[j+1, 1]))
+  print(paste("selected ret =", ret_strategy[j+1], ": cumu ret =", sum(ret_strategy)))
+  
+  if (j >= (n_start+10)){
+    ret_c <- cbind(ret_strategy[(n_start):(j+1)], ret_target[(n_start):(j+1), 1])
+    charts.PerformanceSummary(ret_c)
+    
+  }
+  print("--------------------------------------------")
+  
+}
 
+
+
+#############################################################################
 
 
 output <- list();
