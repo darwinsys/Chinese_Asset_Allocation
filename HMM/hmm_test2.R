@@ -1,7 +1,6 @@
 library(gdata)
 library(TTR)
 library(xts)
-library(fGarch)
 library(PerformanceAnalytics)
 library(PortfolioAnalytics)
 library(mclust)
@@ -89,44 +88,63 @@ ret_benchmark_5d <- na.omit(benchmark / lag(benchmark, 5) - 1)
 ret_benchmark_10d <- na.omit(benchmark / lag(benchmark, 10) - 1)
 
 
+source("HMM/gmmhmm.R");
 ############ 上海指数
 ret_target <- na.omit(cbind(ret_benchmark[, 1], lag(ret_benchmark[, 1], 1), 
                             lag(ret_benchmark[, 1], 2), ret_benchmark_5d[, 1],lag(ret_benchmark_5d[,1], 1)))
-periods <- c(500,  1500)
+periods <- c(500, 1500)
 
 n <- nrow(ret_target);
-n_start <- 3000;
+n_start <- 3920;
 ret_strategy <- ret_target[,1] * 0;
 for (j in n_start:(n-1))
 {
-  data_training_short <- ret_target[(n_start-periods[1]):n_start]
-  data_training_long <- ret_target[(n_start-periods[2]):n_start]
+  data_training_short <- ret_target[(j-periods[1]):j]
+  data_training_long <- ret_target[(j-periods[2]):j]
   
-  gmm_short <- gmm_training(data_training = data_training_short);
-  gmm_long <- gmm_training(data_training = data_training_long);
-  hmm_short <- hmm_training(gmm_short, data_training = data_training_short);
-  hmm_long <- hmm_training(gmm_long, data_training = data_training_long)
+  gmm_short <- gmm_training(data_training_short);
+  gmm_long <- gmm_training(data_training_long);
+  hmm_short <- hmm_training(gmm_short, data_training_short);
+  hmm_long <- hmm_training(gmm_long, data_training_long)
   
   max_sharpe_regime_short <- hmm_short$sharpe_ratio_max_regime
   max_sharpe_short <- hmm_short$sharpe_ratio[max_sharpe_regime_short]
   max_sharpe_regime_long <- hmm_long$sharpe_ratio_max_regime
   max_sharpe_long <- hmm_long$sharpe_ratio[max_sharpe_regime_long]
   
-  predicted_regime_short <- tail(hmm_short$hmm_yhat, 1)
-  predicted_regime_long <- tail(hmm_long$hmm_yhat, 1)
+  previous_regime_short <- tail(hmm_short$hmm_yhat, 1)
+  previous_regime_long <- tail(hmm_long$hmm_yhat, 1)
   
-  signal_short <- as.integer(predicted_regime_short == max_sharpe_short)
-  signal_long <- as.integer(predicted_regime_long == max_sharpe_long)
+  previous_transit_prob_short <- hmm_short$hmm$model$transition[previous_regime_short, ]
+  predicted_regime_short <- match(max(previous_transit_prob_short), previous_transit_prob_short)
   
-  if (max_sharpe_long > max_sharpe_short)
+  previous_transit_prob_long <- hmm_long$hmm$model$transition[previous_regime_long, ]
+  predicted_regime_long <- match(max(previous_transit_prob_long), previous_transit_prob_long)
+  
+  signal_short <- as.integer(predicted_regime_short == max_sharpe_regime_short 
+                             | hmm_short$sharpe_ratio[predicted_regime_short] > 0
+                             )
+  signal_long <- as.integer(as.integer(predicted_regime_long) == max_sharpe_regime_long
+                            | hmm_long$sharpe_ratio[predicted_regime_long] > 0
+                            )
+  
+  if (hmm_long$sharpe_ratio[predicted_regime_long] > max_sharpe_short)
+  {
+    print (paste("signal_long", signal_long) )
     ret_strategy[j+1] <- ret_target[j+1, 1] * signal_long;
-  if (max_sharpe_short < max_sharpe_long)
+  }
+    
+  if (hmm_short$sharpe_ratio[predicted_regime_short] > max_sharpe_long)
+  {
+    print(paste("signal_short", signal_short))
     ret_strategy[j+1] <- ret_target[j+1, 1] * signal_short;
+  }
   
   print(paste("--------------", as.character(index(ret_strategy[j+1]))))
+  print(paste("max sharpe short =", max_sharpe_short))
+  print(paste("max sharpe regime short = ", max_sharpe_regime_short, ":predicted = ", predicted_regime_short))
   print(paste("max sharpe long =", max_sharpe_long))
   print(paste("max sharpe regime long = ", max_sharpe_regime_long, ":predicted = ", predicted_regime_long))
-  print(paste("max sharpe regime short = ", max_sharpe_regime_short, ":predicted = ", predicted_regime_short))
   print(paste("prev ret = ", ret_target[j, 1], ": current ret= ", ret_target[j+1, 1]))
   print(paste("selected ret =", ret_strategy[j+1], ": cumu ret =", sum(ret_strategy)))
   

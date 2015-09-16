@@ -39,7 +39,6 @@ hmm_training <- function(gmm, data_training) {
   print("hmm fitting")
   #### Predict future regime
   regime <- tail(hmm_fitted$yhat, 1);
-  
   output$hmm <- hmm_fitted
   
   ############################################################
@@ -55,6 +54,7 @@ hmm_training <- function(gmm, data_training) {
   output$hmm_ret_regime <- ret_training_regime
   output$hmm_predict_regime <- tail(output$hmm_yhat, 1);
   
+  print(sum(ret_training_regime))
   
   ### calculate the risk measures 
   sharpe_training_regime_vol <- SharpeRatio.annualized(ret_training_regime)[1,]
@@ -64,6 +64,9 @@ hmm_training <- function(gmm, data_training) {
   sortino_training_regime <- SortinoRatio(ret_training_regime)
   max_sortino_regime <- match(max(sortino_training_regime), sortino_training_regime)
   output$hmm_ret_regime_annualized <- Return.annualized(ret_training_regime)
+  
+  print(sharpe_training_regime_vol)
+
   
   output$sharpe_ratio <- sharpe_training_regime_vol;
   output$sharpe_ratio_max_regime <- max_sharpe_regime;
