@@ -39,23 +39,25 @@ ret_target <- na.omit(cbind(ret_benchmark[, 1], lag(ret_benchmark[, 1], 1),
                             lag(ret_benchmark[, 1], 2), ret_benchmark_5d[, 1],lag(ret_benchmark_5d[,1], 1)))
 
 dataset <- na.omit(cbind(
-  benchmark[,1], EMA(benchmark[,1], n=4), SMA(benchmark[,1], n = 20),
-  TTR::MACD(benchmark[,1]), TTR::RSI(benchmark[,1])
+  benchmark_weekly[,1], EMA(benchmark_weekly[,1], n=4), SMA(benchmark_weekly[,1], n = 20),
+  TTR::MACD(benchmark_weekly[,1]), TTR::RSI(benchmark_weekly[,1])
   )
 )
-dataset <- Return.calculate(dataset)
 
-
+benchmark_weekly <- na.omit(benchmark[endpoints(benchmark, on="weeks")])
+macd <- MACD(benchmark_weekly[,1])
 dataset <- na.omit(cbind(
-  benchmark[,1], EMA(benchmark[,1], n=4)
+  benchmark_weekly[,1], EMA(benchmark_weekly[,1], n=4), 
+  macd$macd - macd$signal, SMA(benchmark_weekly[,1], n=20)
+  )
 )
-)
-ret_target <- ret_benchmark[index(dataset), 1]
+ret_benchmark <- Return.calculate(dataset[,1], method="discrete")
+ret_target <- na.omit(ret_benchmark[index(dataset), 1])
 
-periods <- c(500, 1500)
+periods <- c(200, 400)
 
 n <- nrow(ret_target);
-n_start <- 3950;
+n_start <- 500;
 ret_strategy <- ret_target * 0;
 for (j in n_start:(n-1))
 {
