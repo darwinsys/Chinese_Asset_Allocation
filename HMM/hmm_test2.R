@@ -40,7 +40,7 @@ ret_target <- na.omit(cbind(ret_benchmark[, 1], lag(ret_benchmark[, 1], 1),
 periods <- c(500, 1500)
 
 n <- nrow(ret_target);
-n_start <- 3920;
+n_start <- 3950;
 ret_strategy <- ret_target[,1] * 0;
 for (j in n_start:(n-1))
 {
@@ -73,17 +73,25 @@ for (j in n_start:(n-1))
                             | hmm_long$sharpe_ratio[predicted_regime_long] > 0
                             )
   
-  if (hmm_long$sharpe_ratio[predicted_regime_long] > max_sharpe_short)
+  #if (hmm_long$sharpe_ratio[predicted_regime_long] > max_sharpe_short)
+  #{
+  #  print (paste("signal_long", signal_long) )
+  #  ret_strategy[j+1] <- ret_target[j+1, 1] * signal_long;
+  #}
+  
+  if (signal_short | signal_long)
   {
     print (paste("signal_long", signal_long) )
-    ret_strategy[j+1] <- ret_target[j+1, 1] * signal_long;
+    print (paste("signal_short", signal_short) )
+    ret_strategy[j+1] <- ret_target[j+1, 1]
+    
   }
     
-  if (hmm_short$sharpe_ratio[predicted_regime_short] > max_sharpe_long)
-  {
-    print(paste("signal_short", signal_short))
-    ret_strategy[j+1] <- ret_target[j+1, 1] * signal_short;
-  }
+  #if (hmm_short$sharpe_ratio[predicted_regime_short] > max_sharpe_long)
+  #{
+  #  print(paste("signal_short", signal_short))
+   # ret_strategy[j+1] <- ret_target[j+1, 1] * signal_short;
+  #}
   
   print(paste("--------------", as.character(index(ret_strategy[j+1]))))
   print(paste("max sharpe short =", max_sharpe_short))
@@ -111,7 +119,7 @@ ret_target <- na.omit(cbind(ret_benchmark[, 1], lag(ret_benchmark[, 1], 1),
 periods <- c(500, 750, 1000, 1200, 1500, 1750, 2000)
 
 n <- nrow(ret_target);
-n_start <- 3000;
+n_start <- 3030;
 ret_strategy <- ret_target[,1] * 0;
 for (j in n_start:(n+1))
 {
