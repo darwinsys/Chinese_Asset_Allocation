@@ -37,20 +37,35 @@ source("HMM/gmmhmm.R");
 ############ 上海指数
 ret_target <- na.omit(cbind(ret_benchmark[, 1], lag(ret_benchmark[, 1], 1), 
                             lag(ret_benchmark[, 1], 2), ret_benchmark_5d[, 1],lag(ret_benchmark_5d[,1], 1)))
+
+dataset <- na.omit(cbind(
+  benchmark[,1], EMA(benchmark[,1], n=4), SMA(benchmark[,1], n = 20),
+  TTR::MACD(benchmark[,1]), TTR::RSI(benchmark[,1])
+  )
+)
+dataset <- Return.calculate(dataset)
+
+
+dataset <- na.omit(cbind(
+  benchmark[,1], EMA(benchmark[,1], n=4)
+)
+)
+ret_target <- ret_benchmark[index(dataset), 1]
+
 periods <- c(500, 1500)
 
 n <- nrow(ret_target);
 n_start <- 3950;
-ret_strategy <- ret_target[,1] * 0;
+ret_strategy <- ret_target * 0;
 for (j in n_start:(n-1))
 {
-  data_training_short <- ret_target[(j-periods[1]):j]
-  data_training_long <- ret_target[(j-periods[2]):j]
+  data_training_short <- dataset[(j-periods[1]):j]
+  data_training_long <- dataset[(j-periods[2]):j]
   
   gmm_short <- gmm_training(data_training_short);
   gmm_long <- gmm_training(data_training_long);
-  hmm_short <- hmm_training(gmm_short, data_training_short);
-  hmm_long <- hmm_training(gmm_long, data_training_long)
+  hmm_short <- hmm_training(gmm_short, data_training_short, ret_target);
+  hmm_long <- hmm_training(gmm_long, data_training_long, ret_target)
   
   max_sharpe_regime_short <- hmm_short$sharpe_ratio_max_regime
   max_sharpe_short <- hmm_short$sharpe_ratio[max_sharpe_regime_short]
@@ -73,25 +88,25 @@ for (j in n_start:(n-1))
                             | hmm_long$sharpe_ratio[predicted_regime_long] > 0
                             )
   
-  #if (hmm_long$sharpe_ratio[predicted_regime_long] > max_sharpe_short)
-  #{
-  #  print (paste("signal_long", signal_long) )
-  #  ret_strategy[j+1] <- ret_target[j+1, 1] * signal_long;
-  #}
-  
-  if (signal_short | signal_long)
+  if (hmm_long$sharpe_ratio[predicted_regime_long] > max_sharpe_short)
   {
     print (paste("signal_long", signal_long) )
-    print (paste("signal_short", signal_short) )
-    ret_strategy[j+1] <- ret_target[j+1, 1]
-    
+    ret_strategy[j+1] <- ret_target[j+1, 1] * signal_long;
   }
-    
-  #if (hmm_short$sharpe_ratio[predicted_regime_short] > max_sharpe_long)
+  
+  #if (signal_short | signal_long)
   #{
-  #  print(paste("signal_short", signal_short))
-   # ret_strategy[j+1] <- ret_target[j+1, 1] * signal_short;
+  #  print (paste("signal_long", signal_long) )
+  #  print (paste("signal_short", signal_short) )
+  #  ret_strategy[j+1] <- ret_target[j+1, 1]
+    
   #}
+    
+  if (hmm_short$sharpe_ratio[predicted_regime_short] > max_sharpe_long)
+  {
+    print(paste("signal_short", signal_short))
+    ret_strategy[j+1] <- ret_target[j+1, 1] * signal_short;
+  }
   
   print(paste("--------------", as.character(index(ret_strategy[j+1]))))
   print(paste("max sharpe short =", max_sharpe_short))

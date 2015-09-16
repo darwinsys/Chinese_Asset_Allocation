@@ -30,7 +30,7 @@ gmm_training <- function(data_training) {
   return(output);
 }
 
-hmm_training <- function(gmm, data_training) {
+hmm_training <- function(gmm, data_training, ret_target) {
   output <- list();
   
   #### training HMM model
@@ -46,7 +46,7 @@ hmm_training <- function(gmm, data_training) {
   yhat_train <- as.xts(hmm_fitted$yhat, order.by = index(data_training), tzone=tzone(data_training))
   ret_training_regime <- list()
   for (k in 1:gmm$J) {
-    ret_training_regime[[k]] <- data_training[,1] * (yhat_train == k)
+    ret_training_regime[[k]] <- ret_target * (yhat_train == k)
   }
   ret_training_regime <- do.call(cbind, ret_training_regime)
   
@@ -59,21 +59,21 @@ hmm_training <- function(gmm, data_training) {
   ### calculate the risk measures 
   sharpe_training_regime_vol <- SharpeRatio.annualized(ret_training_regime)[1,]
   max_sharpe_regime <- match(max(sharpe_training_regime_vol), sharpe_training_regime_vol)
-  calmar_training_regime <- CalmarRatio(ret_training_regime)
-  max_calmar_regime <- match(max(calmar_training_regime), calmar_training_regime)
-  sortino_training_regime <- SortinoRatio(ret_training_regime)
-  max_sortino_regime <- match(max(sortino_training_regime), sortino_training_regime)
-  output$hmm_ret_regime_annualized <- Return.annualized(ret_training_regime)
+  #calmar_training_regime <- CalmarRatio(ret_training_regime)
+  #max_calmar_regime <- match(max(calmar_training_regime), calmar_training_regime)
+  #sortino_training_regime <- SortinoRatio(ret_training_regime)
+  #max_sortino_regime <- match(max(sortino_training_regime), sortino_training_regime)
+  #output$hmm_ret_regime_annualized <- Return.annualized(ret_training_regime)
   
   print(sharpe_training_regime_vol)
 
   
   output$sharpe_ratio <- sharpe_training_regime_vol;
   output$sharpe_ratio_max_regime <- max_sharpe_regime;
-  output$calmar_ratio <- calmar_training_regime;
-  output$calmar_ratio_max_regime <- max_calmar_regime;
-  output$sortino_ratio <- sortino_training_regime;
-  output$sortino_ratio_max_regime <- max_sortino_regime;
+  #output$calmar_ratio <- calmar_training_regime;
+  #output$calmar_ratio_max_regime <- max_calmar_regime;
+  #output$sortino_ratio <- sortino_training_regime;
+  #output$sortino_ratio_max_regime <- max_sortino_regime;
   
   
   
