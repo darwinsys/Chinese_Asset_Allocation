@@ -54,7 +54,7 @@ portf <- add.constraint(portf, type = "long_only")
 #portf <- add.constraint(portf, type = "full_investment")
 
 #portf <- add.constraint(portf, type="turnover", turnover_target=0.2)
-portf <- add.constraint(portf, type="return", return_target=0.001)
+portf <- add.constraint(portf, type="return", return_target=0.0005)
 #portf <- add.objective(portf, type="risk", name="StdDev")
 
 portf <- add.objective(portf, type="risk", name="ES")
@@ -83,8 +83,77 @@ write.csv(as.data.frame(data_output), "Data/portfolio_5etfs_ret_0.0008_weekly.cs
 #########################################################################
 ##### using HMM as the regime capture model to optimize te portfolio
 #########################################################################
-source("HMM/gmmhmm.R")
-library(mclust)
-gmm_training(data_training = ret_bm) -> gmm
+asset_names  <- colnames(benchmarks)
+spec <- portfolio.spec(assets = asset_names)
+spec <- add.constraint(spec, type = "long_only")
+spec <- add.constraint(portf, type = "full_investment")
 
+#spec <- add.constraint(spec, type="turnover", turnover_target=0.2)
+spec <- add.constraint(spec, type = "return", return_target = 0.0004)
+spec <- add.objective(spec, type="risk", name="ES")
 
+#spec <- add.objective(spec, type = "risk", name = "ES")
+#                       arguments=list(p=0.925, clean="b
+
+### sim is the wraper of all the relevant configuration
+sim <- list();
+sim$training_period = 20;
+sim$rebalance_on = "weeks";
+sim$trace = TRUE;
+
+#### test case 1: using different return_target
+###################################################################################
+list_target <- seq(from = 0.0004, to = 0.001, by = 0.0001);
+list_output <- list();
+
+### sim is the wraper of all the relevant configuration
+sim <- list();
+sim$training_period = 20;
+sim$rebalance_on = "weeks";
+sim$trace = TRUE;
+
+for (i in 1:length(list_target)) {
+  spec <- portfolio.spec(assets = asset_names)
+  spec <- add.constraint(spec, type = "long_only")
+  spec <- add.constraint(portf, type = "full_investment")
+   #spec <- add.constraint(spec, type="turnover", turnover_target=0.2)
+  spec <- add.constraint(spec, type = "return", return_target = list_target[i])
+  spec <- add.objective(spec, type="risk", name="ES");
+  
+  output <- strategy_5etfs_portfolio(ret_assets, spec, sim)
+  
+  print(i);
+  list_output[[i]] <- output$returns;
+}
+
+list_output <- do.call(cbind, list_output)
+colnames(list_output) <- list_target
+rbind(table.AnnualizedReturns(list_output), maxDrawdown(list_output), CalmarRatio(list_output))
+
+#### functions to call for the strategy
+##############################################################
+strategy_5etfs_portfolio <- function(ret_assets, spec, sim) {
+  
+
+  bt.opt <- optimize.portfolio.rebalancing(ret_assets, spec, 
+                optimize_method = "ROI", 
+                rebalance_on = sim$rebalance_on, training_period = sim$training_period,
+                trace = sim$trace);
+  
+  weights <- extractWeights(bt.opt)
+  data <- cbind(ret_assets, weights, fill = NA)
+  data <- na.locf(data, fromLast = TRUE)
+  weights <- data[, 6:10]
+  
+  ret_port <- Return.portfolio(ret_assets, weights = weights)
+  tzone(ret_port) <- Sys.getenv("TZ")
+  
+  
+  output <- list();
+  output$weights <- weights;
+  output$returns <- ret_port;
+  output$bt.opt <- bt.opt;
+  
+  return(output);
+  
+}
