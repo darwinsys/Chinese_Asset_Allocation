@@ -24,7 +24,7 @@ portf <- add.constraint(portf, type = "long_only")
 #portf <- add.constraint(portf, type = "full_investment")
 
 #portf <- add.constraint(portf, type="turnover", turnover_target=0.2)
-#portf <- add.constraint(portf, type="return", return_target=0.0008)
+portf <- add.constraint(portf, type="return", return_target=0.0008)
 #portf <- add.objective(portf, type="risk", name="StdDev")
 
 portf <- add.objective(portf, type="risk", name="StdDev")
@@ -42,10 +42,11 @@ for (i in 1:nrow(ret_port)) {
 }
 
 rets <- cbind(ret_port, ret_bm )
+rets <- rets[500:1602, ]
 charts.PerformanceSummary(rets)
 rbind(table.AnnualizedReturns(rets), maxDrawdown(rets), CalmarRatio(rets))
 
-
+#########################################################################
 ##### rebalancing out-of-sample test
 funds <- colnames(benchmarks)
 portf <- portfolio.spec(assets=funds)
@@ -53,7 +54,7 @@ portf <- add.constraint(portf, type = "long_only")
 #portf <- add.constraint(portf, type = "full_investment")
 
 #portf <- add.constraint(portf, type="turnover", turnover_target=0.2)
-portf <- add.constraint(portf, type="return", return_target=0.0005)
+portf <- add.constraint(portf, type="return", return_target=0.001)
 #portf <- add.objective(portf, type="risk", name="StdDev")
 
 portf <- add.objective(portf, type="risk", name="ES")
@@ -70,8 +71,20 @@ data <- na.locf(data, fromLast = TRUE)
 weights <- data[, 6:10]
 
 ret_port <- Return.portfolio(ret_bm, weights=weights)
+ret_port <- ret_port[500:1602, ]
 tzone(ret_port) <- Sys.getenv("TZ")
 rets <- cbind(ret_port, ret_bm[,1:2 ])
 charts.PerformanceSummary(rets)
 rbind(table.AnnualizedReturns(rets), maxDrawdown(rets), CalmarRatio(rets))
+
+data_output <- na.omit(cbind(ret_port, weights))
+write.csv(as.data.frame(data_output), "Data/portfolio_5etfs_ret_0.0008_weekly.csv")
+
+#########################################################################
+##### using HMM as the regime capture model to optimize te portfolio
+#########################################################################
+source("HMM/gmmhmm.R")
+library(mclust)
+gmm_training(data_training = ret_bm) -> gmm
+
 

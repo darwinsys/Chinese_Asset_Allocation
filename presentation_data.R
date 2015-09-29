@@ -5,8 +5,11 @@ library(depmixS4)
 library(TTR)
 library(quantmod)
  ####上海指数
-data_shanghai <- read.csv("HMM/index_shanghai.csv")
+data_shanghai <- read.csv("HMM")
 data_shanghai <- as.xts(data_shanghai[, 2:5], order.by=strptime(data_shanghai[,1], format="%Y-%m-%d"))
+
+data_shanghai_weekly <- data_shanghai[endpoints(data_shanghai, on = "weeks")]
+plot(data_shanghai_weekly[500:1278,], )
 
 ATRindicator <- ATR(data_shanghai[, 2:4], n = 14)
 ATR <- as.xts(ATRindicator[, 2])

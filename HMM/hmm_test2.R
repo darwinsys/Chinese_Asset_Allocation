@@ -24,8 +24,8 @@ ret_benchmark_10d <- na.omit(benchmark / lag(benchmark, 10) - 1)
 
 
 ############################################################################
-data_bm <- read.csv("HMM/index_szsh.csv")
-benchmark <- as.xts(data_bm[, 2:3], order.by=strptime(data_bm[,1], format="%m/%d/%y", tz=""))
+data_bm <- read.csv("benchmark.csv")
+benchmark <- as.xts(data_bm[, 2:3], order.by=strptime(data_bm[,1], format="%Y/%m/%d", tz=""))
 ret_benchmark <- na.omit(Return.calculate(benchmark, method="discrete"))
 ret_benchmark_weeklys <- na.omit(Return.calculate(benchmark[endpoints(benchmark,on =  "weeks")]), method="discrete")
 
@@ -38,23 +38,38 @@ source("HMM/gmmhmm.R");
 ret_target <- na.omit(cbind(ret_benchmark[, 1], lag(ret_benchmark[, 1], 1), 
                             lag(ret_benchmark[, 1], 2), ret_benchmark_5d[, 1],lag(ret_benchmark_5d[,1], 1)))
 
-dataset <- na.omit(cbind(
-  benchmark_weekly[,1], EMA(benchmark_weekly[,1], n=4), SMA(benchmark_weekly[,1], n = 20),
-  TTR::MACD(benchmark_weekly[,1]), TTR::RSI(benchmark_weekly[,1])
-  )
-)
+
 
 benchmark_weekly <- na.omit(benchmark[endpoints(benchmark, on="weeks")])
-macd <- MACD(benchmark_weekly[,1])
 dataset <- na.omit(cbind(
-  benchmark_weekly[,1], EMA(benchmark_weekly[,1], n=4), 
-  macd$macd - macd$signal, SMA(benchmark_weekly[,1], n=20)
+  benchmark_weekly[,2], EMA(benchmark_weekly[,2], n=4), SMA(benchmark_weekly[,2], n = 20),
+  TTR::RSI(benchmark_weekly[,2])
+)
+)
+
+
+macd <- MACD(benchmark_weekly[,2])
+dataset <- na.omit(cbind(
+  benchmark_weekly[,2], #EMA(benchmark_weekly[,2], n=4), 
+  macd$macd - macd$signal, SMA(benchmark_weekly[,2], n=20)
   )
 )
-ret_benchmark <- Return.calculate(dataset[,1], method="discrete")
+
+
+macd <- MACD(benchmark[,2])
+dataset <- na.omit(cbind(
+  benchmark[,2], EMA(benchmark[,2], n=2), 
+  macd$macd - macd$signal, 
+  SMA(benchmark[,2], n=20)
+)
+)
+
+
+ret_benchmark <- Return.calculate(dataset[,2], method="discrete")
 ret_target <- na.omit(ret_benchmark[index(dataset), 1])
 
-periods <- c(200, 400)
+#periods <- c(500, 1000)
+periods <- c(250, 500)
 
 n <- nrow(ret_target);
 n_start <- 500;

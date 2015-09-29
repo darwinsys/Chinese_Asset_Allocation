@@ -1,4 +1,4 @@
-
+library(HMM)
 gmm_training <- function(data_training) {
   output <- list();
   
